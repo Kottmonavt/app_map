@@ -91,7 +91,7 @@ async def addWarningZone(warningZone: warningZone):
 
 
 @app.get("/warningZone/get")
-async def getWarningZone(xCoord, yCoord):
+async def getWarningZone(xCoord: float, yCoord: float):
     data, count = supabase.table("warningZone").select("*", count='exact').execute()
     # distance_ = sqrt((xCoord - x)**2 + (yCoord - y)**2)
     for _ in range(0, count[1]):
