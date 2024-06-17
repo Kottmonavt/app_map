@@ -32,6 +32,11 @@ class warningZone(BaseModel):
     distance: float
 
 
+class userPosition(BaseModel):
+    xCoord: float
+    yCoord: float
+
+
 # Регистрация пользователя
 @app.post("/users/sign-up")
 async def create_user(user: User):
@@ -87,17 +92,30 @@ async def get_user(user: User):
 async def addWarningZone(warningZone: warningZone):
     data = supabase.table("warningZone").insert({"xCoord": warningZone.xCoord, "yCoord": warningZone.yCoord, "typeZone": warningZone.typeZone, "distance": warningZone.distance}).execute()
     assert len(data.data) > 0
+    x_p = warningZone.xCoord + warningZone.distance
+    x_m = warningZone.xCoord - warningZone.distance
+    y_p = warningZone.yCoord + warningZone.distance
+    y_m = warningZone.yCoord - warningZone.distance
+    data_coord = supabase.table('coord').insert({"id_coord": data.data[0]['id'],"x_p": x_p, "x_m": x_m, "y_p": y_p, "y_m": y_m}).execute()
+    assert len(data_coord.data) > 0
+
+
     # продумать варианты ошибок и ответы на них
 
 
-@app.get("/warningZone/get")
-async def getWarningZone(xCoord: float, yCoord: float):
-    data, count = supabase.table("warningZone").select("*", count='exact').execute()
-    # distance_ = sqrt((xCoord - x)**2 + (yCoord - y)**2)
-    for _ in range(0, count[1]):
-        coord = supabase.table("warningZone"). select("xCoord", "yCoord").execute()
-        x = dict(coord[1][0])['xCoord']
-        y = dict(coord[1][0])['yCoord']
-        distance_ = sqrt((xCoord - x)**2 + (yCoord - y)**2)
-        data_ = supabase.table("warningZone").select("*").gte("distance", distance_).execute()
-    return data_
+@app.post("/warningZone/get")
+async def getWarningZone(userPosition: userPosition):
+    data = supabase.table('coord').select('id_coord', count='exact').filter('x_p', 'gte', userPosition.xCoord).filter('x_m', 'lte', userPosition.xCoord).filter('y_p', 'gte', userPosition.yCoord).filter('y_m', 'lte', userPosition.yCoord).execute()
+    if data.count > 0:
+        count = data.count
+        data_responce = ''
+        for i in range(0, count):
+            data_ = supabase.table('warningZone').select('*').filter('id', 'eq', data.data[0]['id_coord']).execute()
+            if i == 0:
+                data_responce = data_
+            else:
+                data_responce = data_responce + ' ' + data_
+        return data_responce
+    else:
+        res = {'status': 200}
+        return res
