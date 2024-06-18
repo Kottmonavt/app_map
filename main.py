@@ -37,6 +37,14 @@ class userPosition(BaseModel):
     yCoord: float
 
 
+class userInfo(BaseModel):
+    user: str
+    currentSpeed: float
+    xCoord: float
+    yCoord: float
+    allowedSpeed: float
+
+
 # Регистрация пользователя
 @app.post("/users/sign-up")
 async def create_user(user: User):
@@ -100,9 +108,6 @@ async def addWarningZone(warningZone: warningZone):
     assert len(data_coord.data) > 0
 
 
-    # продумать варианты ошибок и ответы на них
-
-
 @app.post("/warningZone/get")
 async def getWarningZone(userPosition: userPosition):
     data = supabase.table('coord').select('id_coord', count='exact').filter('x_p', 'gte', userPosition.xCoord).filter('x_m', 'lte', userPosition.xCoord).filter('y_p', 'gte', userPosition.yCoord).filter('y_m', 'lte', userPosition.yCoord).execute()
@@ -119,3 +124,9 @@ async def getWarningZone(userPosition: userPosition):
     else:
         res = {'status': 200}
         return res
+    
+
+@app.post("/userInfo/add")
+async def addUserInfo(userInfo: userInfo):
+    data = supabase.table("userInfo").insert({"user": userInfo.user, "currentSpeed": userInfo.currentSpeed, "xCoord": userInfo.xCoord, "yCoord": userInfo.yCoord, "allowedSpeed": userInfo.allowedSpeed}).execute()
+    assert len(data.data) > 0
