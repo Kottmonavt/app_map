@@ -98,29 +98,19 @@ async def get_user(user: User):
 # добавление записи об опасной зоне
 @app.post("/warningZone/add")
 async def addWarningZone(warningZone: warningZone):
-    data = supabase.table("warningZone").insert({"xCoord": warningZone.xCoord, "yCoord": warningZone.yCoord, "typeZone": warningZone.typeZone, "distance": warningZone.distance}).execute()
-    assert len(data.data) > 0
     x_p = warningZone.xCoord + warningZone.distance
     x_m = warningZone.xCoord - warningZone.distance
     y_p = warningZone.yCoord + warningZone.distance
     y_m = warningZone.yCoord - warningZone.distance
-    data_coord = supabase.table('coord').insert({"id_coord": data.data[0]['id'],"x_p": x_p, "x_m": x_m, "y_p": y_p, "y_m": y_m}).execute()
+    data_coord = supabase.table('warningZone').insert({"xCoord": warningZone.xCoord, "yCoord": warningZone.yCoord, "typeZone": warningZone.typeZone, "distance": warningZone.distance,"x_p": x_p, "x_m": x_m, "y_p": y_p, "y_m": y_m}).execute()
     assert len(data_coord.data) > 0
 
 
 @app.post("/warningZone/get")
 async def getWarningZone(userPosition: userPosition):
-    data = supabase.table('coord').select('id_coord', count='exact').filter('x_p', 'gte', userPosition.xCoord).filter('x_m', 'lte', userPosition.xCoord).filter('y_p', 'gte', userPosition.yCoord).filter('y_m', 'lte', userPosition.yCoord).execute()
+    data = supabase.table('warningZone').select("*", count='exact').filter('x_p', 'gte', userPosition.xCoord).filter('x_m', 'lte', userPosition.xCoord).filter('y_p', 'gte', userPosition.yCoord).filter('y_m', 'lte', userPosition.yCoord).execute()
     if data.count > 0:
-        count = data.count
-        data_responce = ''
-        for i in range(0, count):
-            data_ = supabase.table('warningZone').select('*').filter('id', 'eq', data.data[0]['id_coord']).execute()
-            if i == 0:
-                data_responce = data_
-            else:
-                data_responce = data_responce + ' ' + data_
-        return data_responce
+        return data
     else:
         res = {'status': 200}
         return res
